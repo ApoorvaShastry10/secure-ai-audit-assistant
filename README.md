@@ -103,30 +103,22 @@ Auditor	auditor@example.com
 Viewer	viewer@example.com
 	ViewerPass123!
 
-  🧠 Using the Application
+## 🧠 Using the Application
 🔐 Login
+Open: http://localhost:5173
 
-Open:
 
-http://localhost:5173
+## 🔎 Run a Query (Hybrid RAG)
 
-Login with seeded credentials.
-
-🔎 Run a Query (Hybrid RAG)
-
-Example:
-
-What are the requirements for SOC 2 evidence retention?
+Example: What are the requirements for SOC 2 evidence retention?
 
 You should see:
 
 Grounded answer
-
 Citations
-
 Retrieval debug counts
 
-🛡 RBAC Demonstration
+## 🛡 RBAC Demonstration
 
 Login as viewer@example.com
 
@@ -135,35 +127,25 @@ Ask a restricted question (e.g., incident response policy).
 Expected result:
 
 No results (insufficient access)
-
 No snippet leakage.
 No citations.
 
 RBAC is enforced BEFORE LLM execution.
 
-🧾 Audit Log Verification
+## 🧾 Audit Log Verification
 
-Navigate to:
-
-http://localhost:5173/audit-logs
+Navigate to: http://localhost:5173/audit-logs
 
 Click Verify Chain
 
-Expected:
-
-Verification: OK
-
+Expected: Verification: OK
 This confirms SHA-256 hash chain integrity.
 
-📂 Where Documents Are Stored
+## 📂 Where Documents Are Stored
 
-Raw documents:
+Raw documents: ./data/documents
 
-./data/documents
-
-Inside containers:
-
-/data/documents
+Inside containers:/data/documents
 
 Chunked content stored in PostgreSQL.
 Embeddings stored in ChromaDB.
