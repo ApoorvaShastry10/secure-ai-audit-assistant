@@ -1,0 +1,78 @@
+.
+.env.example
+ARCHITECTURE.md
+README.md
+SECURITY_CHECKLIST.md
+docker-compose.yml
+backend/
+  Dockerfile
+  alembic.ini
+  pyproject.toml
+  requirements.txt
+  app/
+    __init__.py
+    main.py
+    core/
+      config.py
+      errors.py
+      exceptions.py
+      normalize.py
+      security.py
+    db/
+      base.py
+      models.py
+      session.py
+    schemas/
+      __init__.py
+      admin.py
+      audit.py
+      auth.py
+      documents.py
+      query.py
+    services/
+      __init__.py
+      audit_log.py
+      chroma_client.py
+      doc_ingest.py
+      embeddings.py
+      llm.py
+      neo4j_rbac.py
+      retrieval.py
+    api/
+      __init__.py
+      deps.py
+      routes.py
+      routes_admin.py
+      routes_audit.py
+      routes_auth.py
+      routes_documents.py
+      routes_query.py
+    scripts/
+      __init__.py
+      seed.py
+  alembic/
+    env.py
+    versions/
+      0001_init.py
+  tests/
+    test_audit_hash_chain.py
+    test_hybrid_merge.py
+    test_jwt.py
+    test_rbac_fail_closed.py
+frontend/
+  Dockerfile
+  index.html
+  package.json
+  tsconfig.json
+  vite.config.ts
+  src/
+    App.tsx
+    api.ts
+    auth.ts
+    main.tsx
+    styles.css
+    pages/
+      Admin.tsx
+      AuditLogs.tsx
+      Dashboard.tsx
+      Login.tsx

@@ -1,0 +1,12 @@
+:root{font-family:ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;color:#111;background:#f7f7fb}
+.container{max-width:1100px;margin:0 auto;padding:24px}
+.card{background:white;border:1px solid #e6e6ef;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.row{display:flex;gap:12px;align-items:center}
+.btn{border:1px solid #ddd;background:#111;color:#fff;padding:10px 14px;border-radius:10px;cursor:pointer}
+.btn.secondary{background:#fff;color:#111}
+.input{width:100%;padding:10px 12px;border:1px solid #ddd;border-radius:10px}
+.nav{display:flex;gap:10px;margin-bottom:16px}
+.small{color:#666;font-size:12px}
+.table{width:100%;border-collapse:collapse}
+.table th,.table td{border-bottom:1px solid #eee;padding:10px;text-align:left;vertical-align:top}
+.badge{display:inline-block;padding:2px 8px;border-radius:999px;font-size:12px;border:1px solid #ddd;background:#fafafe}
