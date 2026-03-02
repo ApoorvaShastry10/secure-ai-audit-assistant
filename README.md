@@ -93,15 +93,8 @@ docker compose exec api bash -lc "alembic upgrade head"
 ## 6) Seed Sample Data
 docker compose exec api bash -lc "python -m app.scripts.seed"
 
-Seeded users:
+Seeded users and their credentials will be printed
 
-Role	Email	Password
-Admin	admin@example.com
-	AdminPass123!
-Auditor	auditor@example.com
-	AuditorPass123!
-Viewer	viewer@example.com
-	ViewerPass123!
 
 ## 🧠 Using the Application
 🔐 Login
