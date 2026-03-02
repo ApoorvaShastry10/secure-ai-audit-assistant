@@ -1,50 +1,59 @@
-# Secure AI Audit Assistant (Local Dev) — RAG + Graph RBAC
-Secure RAG-based audit assistant with:
-- FastAPI backend (async, JWT)
-- React (Vite) frontend
-- PostgreSQL (relational)
-- Neo4j (graph RBAC)
-- ChromaDB (vector store)
-- Tamper-evident audit log (SHA-256 hash chain)
-- Fully local Docker Compose setup
--------
-## Prerequisites
+# Secure AI Audit Assistant  
+**Secure RAG + Graph-Based RBAC + Tamper-Evident Audit Log (Local Dev)**
+
+---
+
+## 📌 Overview
+
+Secure AI Audit Assistant is a fully local, Dockerized application that allows auditors and compliance users to securely query internal documents using:
+
+- ✅ Hybrid RAG (Semantic + BM25 Retrieval)
+- ✅ Graph-Based RBAC (Neo4j)
+- ✅ JWT Authentication
+- ✅ Tamper-Evident Audit Logs (SHA-256 Hash Chain)
+- ✅ Fail-Closed Security Model
+- ✅ Fully Offline Mock Mode (No external LLM required)
+
+Everything runs locally using Docker Compose.
+
+---
+
+## 🏗 Architecture
+
+**Backend**
+- FastAPI (Async)
+- SQLAlchemy (Async)
+- PostgreSQL
+- Neo4j (RBAC graph)
+- ChromaDB (Vector Store)
+
+**Frontend**
+- React (Vite)
+
+**Security**
+- JWT authentication
+- RBAC enforced BEFORE LLM
+- No unauthorized snippet leakage
+- Append-only audit log with integrity verification
+
+---
+
+# 🚀 Quick Start (Local Setup)
+
+## 1️⃣ Prerequisites
+
 Install:
+
 - Docker Desktop (includes Docker Compose v2)
 - Git
 
-- Recommended:
-- VS Code
-
-## Quick Start (Local)
-
-### 1) Clone repo
-```bash
-git clone https://github.com/rinkutek/secure-ai-audit-assistant.git
-cd secure-ai-audit-assistant
-
-## Run locally (Docker Compose)
+Verify installation:
 
 ```bash
-cp .env.example .env
-docker compose up --build
+docker --version
+docker compose version
 ```
 
-Run migrations + seed:
-
 ```bash
-docker compose exec api bash -lc "alembic upgrade head"
-docker compose exec api bash -lc "python -m app.scripts.seed"
-```
-
-Run tests:
-
-```bash
-docker compose exec api bash -lc "pytest -q"
-```
-
-Frontend: http://localhost:5173  
-API: http://localhost:8080  
-Neo4j browser: http://localhost:7474  
-
-Mock mode (offline) is enabled by default via `MOCK_MODE=true`.
+docker --version
+docker compose version
