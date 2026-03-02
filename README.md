@@ -1,4 +1,27 @@
-# Secure AI Audit Assistant (Local Dev) — RAG + Graph RBAC + Tamper-Evident Audit Log
+# Secure AI Audit Assistant (Local Dev) — RAG + Graph RBAC
+Secure RAG-based audit assistant with:
+- FastAPI backend (async, JWT)
+- React (Vite) frontend
+- PostgreSQL (relational)
+- Neo4j (graph RBAC)
+- ChromaDB (vector store)
+- Tamper-evident audit log (SHA-256 hash chain)
+- Fully local Docker Compose setup
+-------
+## Prerequisites
+Install:
+- Docker Desktop (includes Docker Compose v2)
+- Git
+
+- Recommended:
+- VS Code
+
+## Quick Start (Local)
+
+### 1) Clone repo
+```bash
+git clone https://github.com/rinkutek/secure-ai-audit-assistant.git
+cd secure-ai-audit-assistant
 
 ## Run locally (Docker Compose)
 
