@@ -92,3 +92,4 @@ jobs:
         projectId: '${{ secrets.GCP_PROJECT_ID }}'
         channelId: live
         target: secure-audit-frontend
+        entryPoint: frontend
