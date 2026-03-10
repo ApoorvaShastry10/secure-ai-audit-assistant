@@ -85,11 +85,7 @@ jobs:
         VITE_API_BASE_URL: ${{ steps.deploy.outputs.url }}
         
     - name: Deploy to Firebase Hosting
-      uses: FirebaseExtended/action-hosting-deploy@v0
-      with:
-        repoToken: '${{ secrets.GITHUB_TOKEN }}'
-        firebaseServiceAccount: '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}'
-        projectId: '${{ secrets.GCP_PROJECT_ID }}'
-        channelId: live
-        target: secure-audit-frontend
-        entryPoint: frontend
+      run: |
+        cd frontend
+        npx firebase-tools deploy --only hosting --token "${{ secrets.FIREBASE_SERVICE_ACCOUNT }}" --project "${{ secrets.GCP_PROJECT_ID }}" --non-interactive
+
