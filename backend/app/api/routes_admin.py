@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 from starlette.status import HTTP_404_NOT_FOUND
 from app.api.deps import get_db, require_admin
 from app.core.security import hash_password
@@ -8,12 +9,13 @@ from app.core.exceptions import AppError
 from app.db.models import User, Role, UserRole, AccessPolicy
 from app.schemas.admin import UserCreate, UserOut, RoleCreate, RoleOut, PolicyCreate, PolicyOut
 from app.services.audit_log import write_audit_log
+from app.services.neo4j_rbac import RBACGraph
 
 router = APIRouter(prefix="/admin")
 
 @router.get("/users", response_model=list[UserOut])
 async def list_users(db: AsyncSession = Depends(get_db), admin=Depends(require_admin)):
-    users = (await db.execute(select(User))).scalars().all()
+    users = (await db.execute(select(User).options(selectinload(User.roles)))).scalars().all()
     return [UserOut(id=u.id, email=u.email, roles=[r.name for r in u.roles], is_active=u.is_active) for u in users]
 
 @router.post("/users", response_model=UserOut)
@@ -31,6 +33,9 @@ async def create_user(payload: UserCreate, db: AsyncSession = Depends(get_db), a
         role_names.append(rn)
     await write_audit_log(db, user_id=admin["user_id"], action="ADMIN_CREATE_USER", outcome="ALLOW", resource_ids=[u.id], client_ip="local", roles=admin.get("roles", []))
     await db.commit()
+    
+    await RBACGraph().add_user(user_id=str(u.id), email=u.email, roles=role_names)
+    
     return UserOut(id=u.id, email=u.email, roles=role_names, is_active=u.is_active)
 
 @router.get("/roles", response_model=list[RoleOut])
@@ -46,6 +51,9 @@ async def create_role(payload: RoleCreate, db: AsyncSession = Depends(get_db), a
     r = Role(name=payload.name); db.add(r); await db.flush()
     await write_audit_log(db, user_id=admin["user_id"], action="ADMIN_CREATE_ROLE", outcome="ALLOW", resource_ids=[payload.name], client_ip="local", roles=admin.get("roles", []))
     await db.commit()
+    
+    await RBACGraph().add_role(role_name=r.name)
+    
     return RoleOut(id=r.id, name=r.name)
 
 @router.get("/policies", response_model=list[PolicyOut])
@@ -59,6 +67,9 @@ async def create_policy(payload: PolicyCreate, db: AsyncSession = Depends(get_db
     db.add(p); await db.flush()
     await write_audit_log(db, user_id=admin["user_id"], action="ADMIN_CREATE_POLICY", outcome="ALLOW", resource_ids=[payload.doc_id], client_ip="local", roles=admin.get("roles", []))
     await db.commit()
+    
+    await RBACGraph().add_policy(role_name=p.role_name, doc_id=p.doc_id, permission=p.permission)
+    
     return PolicyOut(id=p.id, role_name=p.role_name, doc_id=p.doc_id, permission=p.permission)
 
 @router.delete("/policies/{policy_id}")
@@ -70,3 +81,8 @@ async def delete_policy(policy_id: str, db: AsyncSession = Depends(get_db), admi
     await write_audit_log(db, user_id=admin["user_id"], action="ADMIN_DELETE_POLICY", outcome="ALLOW", resource_ids=[policy_id], client_ip="local", roles=admin.get("roles", []))
     await db.commit()
     return {"ok": True}
+
+@router.get("/graph")
+async def get_graph(admin=Depends(require_admin)):
+    graph_svc = RBACGraph()
+    return await graph_svc.get_full_graph()

@@ -14,12 +14,12 @@ class MockLLMProvider(LLMProvider):
         q = question.lower()
         picks=[]
         for ch in context_chunks:
-            for s in re.split(r"(?<=[.!?])\s+", ch['content']):
+            for s in re.split(r"(?<=[.!?\n])\s+", ch['content']):
                 if any(tok in s.lower() for tok in q.split()[:6]):
                     picks.append((s.strip(), ch['citation']))
         if not picks:
             for ch in context_chunks[:2]:
-                s = re.split(r"(?<=[.!?])\s+", ch['content'].strip())[0].strip()
+                s = re.split(r"(?<=[.!?\n])\s+", ch['content'].strip())[0].strip()
                 if s: picks.append((s, ch['citation']))
         seen=set(); out=[]
         for s,c in picks:
