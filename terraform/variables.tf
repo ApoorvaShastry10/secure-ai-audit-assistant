@@ -21,6 +21,23 @@ variable "db_password" {
   sensitive   = true
 }
 
+variable "neo4j_uri" {
+  description = "Neo4j AuraDB Connection URI (e.g., neo4j+s://<dbid>.databases.neo4j.io)"
+  type        = string
+}
+
+variable "neo4j_user" {
+  description = "Neo4j Username"
+  type        = string
+  default     = "neo4j"
+}
+
+variable "neo4j_password" {
+  description = "Neo4j Password"
+  type        = string
+  sensitive   = true
+}
+
 variable "storage_account_name" {
   description = "Name for the Azure Storage Account (must be globally unique and lowercase)"
   type        = string

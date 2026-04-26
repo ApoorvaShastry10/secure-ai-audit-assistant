@@ -97,6 +97,18 @@ resource "azurerm_container_app" "backend" {
         name  = "POSTGRES_USER"
         value = var.db_username
       }
+      env {
+        name  = "NEO4J_URI"
+        value = var.neo4j_uri
+      }
+      env {
+        name  = "NEO4J_USER"
+        value = var.neo4j_user
+      }
+      env {
+        name  = "NEO4J_PASSWORD"
+        value = var.neo4j_password
+      }
       # In production, reference a secret for the DB password, JWT secret, and Neo4j creds
     }
   }
