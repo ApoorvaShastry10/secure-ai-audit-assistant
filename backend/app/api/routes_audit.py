@@ -2,7 +2,7 @@ import csv, io, orjson
 from fastapi import APIRouter, Depends, Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.api.deps import get_db, require_admin
+from app.api.deps import get_db, require_admin, get_current_user
 from app.db.models import AuditLog
 from app.schemas.audit import AuditLogOut, VerifyResult
 from app.services.audit_log import verify_audit_log_chain
@@ -10,9 +10,14 @@ from app.services.audit_log import verify_audit_log_chain
 router = APIRouter(prefix="/audit-logs")
 
 @router.get("", response_model=list[AuditLogOut])
-async def list_audit_logs(db: AsyncSession = Depends(get_db), admin=Depends(require_admin)):
+async def list_audit_logs(db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
     from app.db.models import User
-    res = await db.execute(select(AuditLog, User.email).outerjoin(User, AuditLog.user_id == User.id).order_by(AuditLog.log_id.desc()).limit(500))
+    
+    stmt = select(AuditLog, User.email).outerjoin(User, AuditLog.user_id == User.id)
+    if "admin" not in user.get("roles", []):
+        stmt = stmt.where(AuditLog.user_id == user["user_id"])
+        
+    res = await db.execute(stmt.order_by(AuditLog.log_id.desc()).limit(500))
     rows = res.all()
     out=[]
     for l, email in rows:

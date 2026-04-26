@@ -19,6 +19,7 @@ dist/
 # local data
 data/
 *.log
+token.json
 
 # docker
 **/.docker/
