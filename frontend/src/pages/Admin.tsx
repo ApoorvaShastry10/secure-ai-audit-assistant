@@ -1,16 +1,20 @@
 import React, { useEffect, useState } from 'react'
-import { apiUsers, apiPolicies, apiCreateUser, apiCreatePolicy } from '../api'
+import { apiUsers, apiPolicies, apiCreateUser, apiCreatePolicy, apiDocuments, apiDeleteDocument, apiTogglePolicy, apiDeleteUser, apiUpdateUserRoles } from '../api'
 import { getAccessToken } from '../auth'
 
 export default function Admin() {
   const [users, setUsers] = useState<any[]>([])
   const [policies, setPolicies] = useState<any[]>([])
+  const [documents, setDocuments] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
 
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [rolesInput, setRolesInput] = useState('')
+
+  const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  const [editRolesInput, setEditRolesInput] = useState('')
 
   const [polRole, setPolRole] = useState('')
   const [polDoc, setPolDoc] = useState('')
@@ -22,8 +26,8 @@ export default function Admin() {
     try {
       const token = getAccessToken()
       if (!token) throw new Error('Please login first.')
-      const [u, p] = await Promise.all([apiUsers(token), apiPolicies(token)])
-      setUsers(u); setPolicies(p)
+      const [u, p, d] = await Promise.all([apiUsers(token), apiPolicies(token), apiDocuments(token)])
+      setUsers(u); setPolicies(p); setDocuments(d)
     } catch (e: any) { setError(e.message || 'Failed') }
   }
 
@@ -56,6 +60,50 @@ export default function Admin() {
     } catch (e: any) { setError(e.message || 'Failed to create policy') }
   }
 
+  async function handleDeleteDocument(docId: string) {
+    if (!window.confirm("Are you sure you want to permanently delete this document from the vault?")) return;
+    try {
+      const token = getAccessToken()
+      if (!token) return
+      await apiDeleteDocument(token, docId)
+      setMsg(`Document deleted!`)
+      load()
+    } catch (e: any) { setError(e.message || 'Failed to delete document') }
+  }
+
+  async function handleTogglePolicy(policyId: string) {
+    try {
+      const token = getAccessToken()
+      if (!token) return
+      await apiTogglePolicy(token, policyId)
+      setMsg(`Policy status updated!`)
+      load()
+    } catch (e: any) { setError(e.message || 'Failed to toggle policy') }
+  }
+
+  async function handleDeleteUser(userId: string) {
+    if (!window.confirm("Are you sure you want to permanently delete this identity?")) return;
+    try {
+      const token = getAccessToken()
+      if (!token) return
+      await apiDeleteUser(token, userId)
+      setMsg(`Identity deleted!`)
+      load()
+    } catch (e: any) { setError(e.message || 'Failed to delete user') }
+  }
+
+  async function handleSaveUserRoles(userId: string) {
+    try {
+      const token = getAccessToken()
+      if (!token) return
+      const rolesArray = editRolesInput.split(',').map(s => s.trim()).filter(Boolean)
+      await apiUpdateUserRoles(token, userId, rolesArray)
+      setMsg(`Identity roles updated!`)
+      setEditingUserId(null)
+      load()
+    } catch (e: any) { setError(e.message || 'Failed to update roles') }
+  }
+
   return (
     <div style={{ display: 'grid', gap: 24 }}>
       <div className="card" style={{ background: 'linear-gradient(to right, rgba(59, 130, 246, 0.05), transparent)' }}>
@@ -77,10 +125,10 @@ export default function Admin() {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
         <div className="card" style={{ borderTop: '4px solid var(--primary)' }}>
           <h4 style={{ marginTop: 0, marginBottom: 16 }}>Register Identity</h4>
-          <form style={{ display: 'grid', gap: 12 }} onSubmit={handleCreateUser}>
-            <input className="input" placeholder="Corporate Email" value={email} onChange={e => setEmail(e.target.value)} required />
-            <input className="input" type="password" placeholder="Secure Password" value={password} onChange={e => setPassword(e.target.value)} required />
-            <input className="input" placeholder="Roles (e.g. auditor, executive)" value={rolesInput} onChange={e => setRolesInput(e.target.value)} required />
+          <form style={{ display: 'grid', gap: 12 }} onSubmit={handleCreateUser} autoComplete="off">
+            <input className="input" placeholder="Corporate Email" value={email} onChange={e => setEmail(e.target.value)} required autoComplete="new-password" />
+            <input className="input" type="password" placeholder="Secure Password" value={password} onChange={e => setPassword(e.target.value)} required autoComplete="new-password" />
+            <input className="input" placeholder="Roles (e.g. auditor, executive)" value={rolesInput} onChange={e => setRolesInput(e.target.value)} required autoComplete="off" />
             <button className="btn primary" type="submit" style={{ marginTop: 8 }}>Provision User</button>
           </form>
         </div>
@@ -103,15 +151,23 @@ export default function Admin() {
         <h3 style={{ marginTop: 0, marginBottom: 16 }}>Directory of Identities</h3>
         <div style={{ overflowX: 'auto' }}>
           <table className="table">
-            <thead><tr><th>Email Address</th><th>Assigned Capabilities</th><th>Status</th><th>UUID</th></tr></thead>
+            <thead><tr><th>Email Address</th><th>Assigned Capabilities</th><th>Status</th><th>UUID</th><th>Actions</th></tr></thead>
             <tbody>
               {users.map((u: any) => (
                 <tr key={u.id}>
-                  <td style={{ fontWeight: 500, color: '#f8fafc' }}>{u.email}</td>
+                  <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>{u.email}</td>
                   <td>
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                      {(u.roles || []).map((r: string) => <span key={r} className="badge">{r}</span>)}
-                    </div>
+                    {editingUserId === u.id ? (
+                      <div className="row" style={{ gap: 8 }}>
+                        <input className="input" value={editRolesInput} onChange={e => setEditRolesInput(e.target.value)} style={{ padding: '4px 8px', minWidth: 150 }} placeholder="e.g. auditor, admin" />
+                        <button className="btn primary" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => handleSaveUserRoles(u.id)}>Save</button>
+                        <button className="btn secondary" style={{ padding: '4px 8px', fontSize: 12 }} onClick={() => setEditingUserId(null)}>Cancel</button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                        {(u.roles || []).map((r: string) => <span key={r} className="badge">{r}</span>)}
+                      </div>
+                    )}
                   </td>
                   <td>
                     {u.is_active ?
@@ -120,6 +176,12 @@ export default function Admin() {
                     }
                   </td>
                   <td><code>{u.id.substring(0, 8)}...</code></td>
+                  <td>
+                    <div className="row" style={{ gap: 8 }}>
+                      <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px' }} onClick={() => { setEditingUserId(u.id); setEditRolesInput(u.roles.join(', ')) }}>Edit</button>
+                      <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} onClick={() => handleDeleteUser(u.id)}>Delete</button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -128,18 +190,53 @@ export default function Admin() {
       </div>
 
       <div className="card">
+        <h3 style={{ marginTop: 0, marginBottom: 16 }}>Document Vault Management</h3>
+        {documents.length === 0 ? <div className="small" style={{ opacity: 0.5 }}>No documents in vault.</div> : (
+          <div style={{ overflowX: 'auto' }}>
+            <table className="table">
+              <thead><tr><th>Title</th><th>Filename</th><th>Upload Date</th><th>UUID</th><th>Actions</th></tr></thead>
+              <tbody>
+                {documents.map((d: any) => (
+                  <tr key={d.id}>
+                    <td style={{ fontWeight: 500, color: 'var(--text-main)' }}>{d.title}</td>
+                    <td className="small">{d.filename}</td>
+                    <td className="small">{new Date(d.created_at).toLocaleDateString()}</td>
+                    <td><code>{d.id.substring(0, 8)}...</code></td>
+                    <td>
+                      <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} onClick={() => handleDeleteDocument(d.id)}>Delete</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <div className="card">
         <h3 style={{ marginTop: 0, marginBottom: 16 }}>Active Enterprise Policies</h3>
         {policies.length === 0 ? <div className="small" style={{ opacity: 0.5 }}>No cryptographic policies detected.</div> : (
           <div style={{ overflowX: 'auto' }}>
             <table className="table">
-              <thead><tr><th>Consumer Role</th><th>Target Resource Hash</th><th>Protocol</th><th>Policy UUID</th></tr></thead>
+              <thead><tr><th>Consumer Role</th><th>Target Resource Hash</th><th>Protocol</th><th>Policy UUID</th><th>Actions</th></tr></thead>
               <tbody>
                 {policies.map((p: any) => (
                   <tr key={p.id}>
                     <td style={{ fontWeight: 500, color: 'var(--accent)' }}>{p.role_name}</td>
                     <td><code>{p.doc_id.substring(0, 16)}...</code></td>
-                    <td><span className="badge" style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#60a5fa', borderColor: 'rgba(59, 130, 246, 0.2)' }}>{p.permission}</span></td>
+                    <td>
+                      <span className="badge" style={{ background: p.permission === 'REVOKED' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(59, 130, 246, 0.1)', color: p.permission === 'REVOKED' ? 'var(--danger)' : '#60a5fa', borderColor: p.permission === 'REVOKED' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(59, 130, 246, 0.2)' }}>
+                        {p.permission}
+                      </span>
+                    </td>
                     <td><code>{p.id.substring(0, 8)}...</code></td>
+                    <td>
+                      {p.permission === 'REVOKED' ? (
+                        <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px', color: 'var(--success)', borderColor: 'rgba(16, 185, 129, 0.3)' }} onClick={() => handleTogglePolicy(p.id)}>Allow</button>
+                      ) : (
+                        <button className="btn secondary" style={{ fontSize: 12, padding: '4px 8px', color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.3)' }} onClick={() => handleTogglePolicy(p.id)}>Revoke</button>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>

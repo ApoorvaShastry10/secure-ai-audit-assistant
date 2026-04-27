@@ -1,39 +1,57 @@
-variable "gcp_project_id" {
-  description = "The GCP project ID to deploy into"
+variable "azure_resource_group_name" {
+  description = "The name of the Azure Resource Group to create/deploy into"
   type        = string
+  default     = "rg-secure-audit"
 }
 
-variable "gcp_region" {
-  description = "The GCP region to deploy into"
-  default     = "us-central1"
+variable "azure_location" {
+  description = "The Azure region to deploy into"
+  default     = "East US"
 }
 
 variable "db_username" {
-  description = "Master username for the Cloud SQL Postgres instance"
+  description = "Administrator username for the PostgreSQL Flexible Server"
   type        = string
   sensitive   = true
 }
 
 variable "db_password" {
-  description = "Master password for the Cloud SQL Postgres instance"
+  description = "Administrator password for the PostgreSQL Flexible Server"
   type        = string
   sensitive   = true
 }
 
-variable "gcs_bucket_name" {
-  description = "Name for the GCS bucket to store audit docs and exported logs"
+variable "neo4j_uri" {
+  description = "Neo4j AuraDB Connection URI (e.g., neo4j+s://<dbid>.databases.neo4j.io)"
+  type        = string
+}
+
+variable "neo4j_user" {
+  description = "Neo4j Username"
+  type        = string
+  default     = "neo4j"
+}
+
+variable "neo4j_password" {
+  description = "Neo4j Password"
+  type        = string
+  sensitive   = true
+}
+
+variable "storage_account_name" {
+  description = "Name for the Azure Storage Account (must be globally unique and lowercase)"
   type        = string
 }
 
 variable "backend_image_url" {
-  description = "GCR or Artifact Registry URL for the backend Docker image"
+  description = "ACR, Docker Hub, or GHCR URL for the backend Docker image"
   type        = string
 }
 
-output "cloud_run_url" {
-  value = google_cloud_run_v2_service.backend.uri
+output "container_app_url" {
+  value = azurerm_container_app.backend.latest_revision_fqdn
 }
 
-output "cloud_sql_connection_name" {
-  value = google_sql_database_instance.postgres.connection_name
+output "postgresql_server_fqdn" {
+  value = azurerm_postgresql_flexible_server.postgres.fqdn
 }

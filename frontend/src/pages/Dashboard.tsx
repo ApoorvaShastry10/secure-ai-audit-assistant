@@ -3,7 +3,7 @@ import { apiQuery, apiUploadDocument } from '../api'
 import { getAccessToken, getUserRoles } from '../auth'
 
 export default function Dashboard() {
-  const [query, setQuery] = useState('What are the requirements for SOC 2 evidence retention?')
+  const [query, setQuery] = useState('')
   const [answer, setAnswer] = useState('')
   const [citations, setCitations] = useState<any[]>([])
   const [debug, setDebug] = useState<any | null>(null)
@@ -97,7 +97,7 @@ export default function Dashboard() {
         <h3 style={{ marginTop: 0, marginBottom: 16 }}>AI Synthesis</h3>
         {answer ? (
           <div style={{ background: 'rgba(0,0,0,0.2)', padding: 20, borderRadius: 12, border: '1px solid var(--border-subtle)' }}>
-            <div style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6, color: '#f8fafc' }}>{answer}</div>
+            <div style={{ whiteSpace: 'pre-wrap', margin: 0, lineHeight: 1.6, color: 'var(--text-main)' }}>{answer}</div>
           </div>
         ) : (
           <div className="small" style={{ fontStyle: 'italic', opacity: 0.5 }}>Waiting for semantic query execution...</div>

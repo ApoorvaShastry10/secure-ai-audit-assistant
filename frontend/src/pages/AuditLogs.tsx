@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react'
 import { apiAuditLogs, apiVerifyAudit } from '../api'
-import { getAccessToken } from '../auth'
+import { getAccessToken, getUserRoles } from '../auth'
 
 export default function AuditLogs() {
   const [rows, setRows] = useState<any[]>([])
   const [verify, setVerify] = useState<any | null>(null)
   const [error, setError] = useState<string | null>(null)
+  
+  const roles = getUserRoles()
+  const isAdmin = roles.includes('admin')
 
   async function load() {
     setError(null)
@@ -30,17 +33,19 @@ export default function AuditLogs() {
         </div>
         <div className="row">
           <button className="btn secondary" onClick={load} style={{ fontSize: 13 }}>Sync Logs</button>
-          <button className="btn primary" style={{ background: 'linear-gradient(135deg, var(--success), #059669)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }} onClick={async () => {
-            setError(null)
-            try {
-              const token = getAccessToken()
-              if (!token) throw new Error('Please login first.')
-              setVerify(await apiVerifyAudit(token))
-            } catch (e: any) { setError(e.message || 'Verify failed') }
-          }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
-            Verify Chain Integrity
-          </button>
+          {isAdmin && (
+            <button className="btn primary" style={{ background: 'linear-gradient(135deg, var(--success), #059669)', fontSize: 13, display: 'flex', alignItems: 'center', gap: 6 }} onClick={async () => {
+              setError(null)
+              try {
+                const token = getAccessToken()
+                if (!token) throw new Error('Please login first.')
+                setVerify(await apiVerifyAudit(token))
+              } catch (e: any) { setError(e.message || 'Verify failed') }
+            }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+              Verify Chain Integrity
+            </button>
+          )}
         </div>
       </div>
 
@@ -67,7 +72,7 @@ export default function AuditLogs() {
             {rows.map((r: any) => (
               <tr key={r.log_id}>
                 <td style={{ color: 'var(--text-muted)' }}>#{r.log_id}</td>
-                <td style={{ color: '#f8fafc', whiteSpace: 'nowrap' }}>{new Date(r.timestamp_utc).toLocaleString()}</td>
+                <td style={{ color: 'var(--text-main)', whiteSpace: 'nowrap' }}>{new Date(r.timestamp_utc).toLocaleString()}</td>
                 <td style={{ fontWeight: 500, color: 'var(--primary)' }}>{r.user_id}</td>
                 <td><code>{r.action}</code></td>
                 <td>
@@ -91,10 +96,12 @@ export default function AuditLogs() {
           </tbody>
         </table>
       </div>
-      <div className="small" style={{ marginTop: 20, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
-        Restricted to Admin personnel.
-      </div>
+      {isAdmin && (
+        <div className="small" style={{ marginTop: 20, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: 6 }}>
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Restricted to Admin personnel.
+        </div>
+      )}
     </div>
   )
 }

@@ -12,6 +12,9 @@ class UserOut(BaseModel):
     roles: List[str]
     is_active: bool
 
+class UserUpdateRoles(BaseModel):
+    roles: List[str]
+
 class RoleCreate(BaseModel):
     name: str = Field(min_length=2, max_length=64)
 

@@ -63,6 +63,25 @@ export async function apiCreateUser(accessToken: string, email: string, password
   return r.json()
 }
 
+export async function apiUpdateUserRoles(accessToken: string, userId: string, roles: string[]) {
+  const r = await fetch(`${API_BASE}/admin/users/${userId}/roles`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` },
+    body: JSON.stringify({ roles })
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to update user roles'))
+  return r.json()
+}
+
+export async function apiDeleteUser(accessToken: string, userId: string) {
+  const r = await fetch(`${API_BASE}/admin/users/${userId}`, {
+    method: 'DELETE',
+    headers: { Authorization: `Bearer ${accessToken}` }
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to delete user'))
+  return r.json()
+}
+
 export async function apiCreateRole(accessToken: string, name: string) {
   const r = await fetch(`${API_BASE}/admin/roles`, {
     method: 'POST',
@@ -128,5 +147,20 @@ export async function apiDeleteDocument(accessToken: string, doc_id: string) {
     try { msg = parseError(await r.json(), msg) } catch (e) { }
     throw new Error(msg)
   }
+  return r.json()
+}
+
+export async function apiDocuments(accessToken: string) {
+  const r = await fetch(`${API_BASE}/documents`, { headers: { Authorization: `Bearer ${accessToken}` } })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Documents failed'))
+  return r.json()
+}
+
+export async function apiTogglePolicy(accessToken: string, policy_id: string) {
+  const r = await fetch(`${API_BASE}/admin/policies/${policy_id}/toggle`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${accessToken}` }
+  })
+  if (!r.ok) throw new Error(parseError(await r.json(), 'Failed to toggle policy'))
   return r.json()
 }

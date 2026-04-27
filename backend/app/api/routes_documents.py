@@ -47,6 +47,13 @@ async def upload_document(request: Request, file: UploadFile = File(...), title:
     
     return UploadResponse(doc_id=doc_id, chunks_created=chunks_created)
 
+@router.get("", response_model=list[DocumentOut])
+async def list_documents(db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
+    if "admin" not in user.get("roles", []):
+        raise AppError("Admin role required", status_code=403, code="FORBIDDEN")
+    docs = (await db.execute(select(Document).order_by(Document.created_at.desc()))).scalars().all()
+    return [DocumentOut(id=d.id, title=d.title, filename=d.filename, created_at=d.created_at) for d in docs]
+
 @router.get("/{doc_id}", response_model=DocumentWithChunks)
 async def get_document(doc_id: str, db: AsyncSession = Depends(get_db), user=Depends(get_current_user)):
     if "admin" not in user.get("roles", []):
@@ -90,12 +97,6 @@ async def delete_document(doc_id: str, db: AsyncSession = Depends(get_db), user=
     user_id = user["user_id"]; roles=user.get("roles", [])
     if "admin" not in roles:
         raise AppError("Admin role required to delete documents", status_code=403, code="FORBIDDEN")
-        
-    allowed_docs = set(await RBACGraph().allowed_doc_ids(user_id=user_id, roles=roles))
-    if doc_id not in allowed_docs:
-        await write_audit_log(db, user_id=user_id, action="DOCUMENT_DELETE", outcome="DENY", resource_ids=[doc_id], client_ip=client_ip, roles=roles)
-        await db.commit()
-        raise AppError("Insufficient access to delete document", status_code=403, code="FORBIDDEN")
         
     doc = (await db.execute(select(Document).where(Document.id == doc_id))).scalar_one_or_none()
     if not doc:
