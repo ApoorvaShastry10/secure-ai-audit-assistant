@@ -12,6 +12,9 @@ class UserOut(BaseModel):
     roles: List[str]
     is_active: bool
 
+class UserUpdateRoles(BaseModel):
+    roles: List[str]
+
 class RoleCreate(BaseModel):
     name: str = Field(min_length=2, max_length=64)
 
@@ -22,7 +25,7 @@ class RoleOut(BaseModel):
 class PolicyCreate(BaseModel):
     role_name: str = Field(min_length=2, max_length=64)
     doc_id: str
-    permission: str = Field(default="READ", pattern="^(READ)$")
+    permission: str = Field(default="READ", pattern="^(READ|WRITE)$")
 
 class PolicyOut(BaseModel):
     id: str

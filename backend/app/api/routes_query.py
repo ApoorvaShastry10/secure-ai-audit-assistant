@@ -80,6 +80,20 @@ async def query_endpoint(req: QueryRequest, request: Request, db: AsyncSession =
 
     answer = await get_llm_provider().answer(question=q, context_chunks=ctx)
 
+    import re
+    cited_doc_ids = set(re.findall(r"\[DOC:([0-9a-fA-F-]+)(?:#\d+)?\]", answer))
+    
+    unique_citations = []
+    seen_docs = set()
+    filter_set = cited_doc_ids if cited_doc_ids else set(c.doc_id for c in citations)
+    
+    for c in citations:
+        if c.doc_id in filter_set and c.doc_id not in seen_docs:
+            seen_docs.add(c.doc_id)
+            unique_citations.append(c)
+            
+    final_citations = unique_citations
+
     await write_audit_log(
         db, user_id=user_id, action="QUERY", outcome="ALLOW",
         resource_ids=sorted({c["doc_id"] for c in authorized})[:50],
@@ -89,6 +103,6 @@ async def query_endpoint(req: QueryRequest, request: Request, db: AsyncSession =
 
     return QueryResponse(
         answer=answer,
-        citations=citations,
+        citations=final_citations,
         debug=QueryDebug(retrieved_total=retrieved_total, authorized_total=len(authorized)),
     )
