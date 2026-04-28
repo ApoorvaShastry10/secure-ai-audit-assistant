@@ -26,7 +26,23 @@ async def upload_document(request: Request, file: UploadFile = File(...), title:
     safe_name = Path(file.filename or "upload.txt").name
     path = storage_dir / safe_name
     path.write_bytes(data)
-    content_text = data.decode("utf-8", errors="replace")
+    
+    # Extract text based on file type
+    content_text = ""
+    if safe_name.lower().endswith(".pdf"):
+        try:
+            import io
+            from pypdf import PdfReader
+            reader = PdfReader(io.BytesIO(data))
+            content_text = "\n".join([page.extract_text() for page in reader.pages if page.extract_text()])
+        except Exception:
+            content_text = data.decode("utf-8", errors="replace")
+    else:
+        content_text = data.decode("utf-8", errors="replace")
+    
+    # CRITICAL: Strip null bytes for PostgreSQL compatibility
+    content_text = content_text.replace("\x00", "")
+    
     doc_id, chunks_created = await ingest_document(db, title=title, filename=safe_name, storage_path=str(path), content_text=content_text)
     await write_audit_log(db, user_id=user_id, action="DOCUMENT_UPLOAD", outcome="ALLOW", resource_ids=[doc_id], client_ip=client_ip, roles=roles)
     await db.commit()

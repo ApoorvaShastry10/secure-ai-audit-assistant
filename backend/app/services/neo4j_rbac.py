@@ -29,3 +29,22 @@ class RBACGraph:
             raise AppError("RBAC service unavailable", status_code=HTTP_503_SERVICE_UNAVAILABLE, code="RBAC_UNAVAILABLE")
         _cache[cache_key] = doc_ids
         return doc_ids
+
+    async def get_full_graph(self):
+        nodes = []
+        links = []
+        try:
+            async with self._driver.session() as session:
+                # Get nodes
+                res = await session.run("MATCH (n) RETURN id(n) as id, labels(n)[0] as label, properties(n) as props")
+                async for r in res:
+                    name = r["props"].get("email") or r["props"].get("name") or r["props"].get("id") or "Unknown"
+                    nodes.append({"id": str(r["id"]), "label": str(name), "type": r["label"]})
+                
+                # Get relationships
+                res = await session.run("MATCH (n)-[r]->(m) RETURN id(n) as source, id(m) as target, type(r) as type")
+                async for r in res:
+                    links.append({"source": str(r["source"]), "target": str(r["target"]), "label": r["type"]})
+        except Exception:
+            raise AppError("Failed to fetch graph data", status_code=HTTP_503_SERVICE_UNAVAILABLE, code="NEO4J_ERROR")
+        return {"nodes": nodes, "links": links}
