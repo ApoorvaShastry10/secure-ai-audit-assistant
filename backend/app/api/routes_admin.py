@@ -18,6 +18,10 @@ async def list_users(db: AsyncSession = Depends(get_db), admin=Depends(require_a
     users = (await db.execute(select(User).options(selectinload(User.roles)))).scalars().all()
     return [UserOut(id=u.id, email=u.email, roles=[r.name for r in u.roles], is_active=u.is_active) for u in users]
 
+@router.get("/graph", response_model=GraphData)
+async def get_rbac_graph(admin=Depends(require_admin)):
+    return await RBACGraph().get_full_graph()
+
 @router.post("/users", response_model=UserOut)
 async def create_user(payload: UserCreate, db: AsyncSession = Depends(get_db), admin=Depends(require_admin)):
     if (await db.execute(select(User).where(User.email==payload.email))).scalar_one_or_none():
@@ -97,6 +101,15 @@ async def list_policies(db: AsyncSession = Depends(get_db), admin=Depends(requir
 
 @router.post("/policies", response_model=PolicyOut)
 async def create_policy(payload: PolicyCreate, db: AsyncSession = Depends(get_db), admin=Depends(require_admin)):
+    existing = (await db.execute(select(AccessPolicy).where(
+        AccessPolicy.role_name == payload.role_name,
+        AccessPolicy.doc_id == payload.doc_id,
+        AccessPolicy.permission == payload.permission
+    ))).scalar_one_or_none()
+    
+    if existing:
+        raise AppError("Policy already exists", status_code=409, code="ALREADY_EXISTS")
+
     p = AccessPolicy(role_name=payload.role_name, doc_id=payload.doc_id, permission=payload.permission)
     db.add(p); await db.flush()
     await write_audit_log(db, user_id=admin["user_id"], action="ADMIN_CREATE_POLICY", outcome="ALLOW", resource_ids=[payload.doc_id], client_ip="local", roles=admin.get("roles", []))
